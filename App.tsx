@@ -193,9 +193,11 @@ export default function App() {
             setSelectedSchedule(item);
             setLoadedQuantity('');
           } else {
+            const destStr = item.destination ? `\nCliente: ${item.destination.client?.name || '-'}\nCantiere: ${item.destination.name || '-'}\nIndirizzo: ${item.destination.address || '-'}` : '';
+            const cerStr = item.wasteType ? `\nCER: ${item.wasteType.cerCode} ${item.wasteType.description ? '(' + item.wasteType.description + ')' : ''}` : '';
             Alert.alert(
               'Info Viaggio', 
-              `Stato: ${item.status}\nMezzo: ${item.vehicle?.plateNumber || '-'}\nQuantità: ${item.loadedQuantity ? item.loadedQuantity + ' t' : '-'}\n\nNote: ${item.notes || '-'}`
+              `Stato: ${item.status}\nMezzo: ${item.vehicle?.plateNumber || '-'}${destStr}${cerStr}\nQuantità: ${item.loadedQuantity ? item.loadedQuantity + ' t' : '-'}\n\nNote: ${item.notes || '-'}`
             );
           }
         }}
@@ -209,6 +211,20 @@ export default function App() {
 
         <Text style={styles.cardTextPlate}>Mezzo: <Text style={styles.boldText}>{item.vehicle?.plateNumber || '-'}</Text> {item.vehicle?.model ? `(${item.vehicle.model})` : ''}</Text>
         
+        {item.destination ? (
+          <>
+            <Text style={styles.cardTextPlate}>Cliente: <Text style={styles.boldText}>{item.destination.client?.name || '-'}</Text></Text>
+            <Text style={styles.cardTextPlate}>Cantiere: <Text style={styles.boldText}>{item.destination.name || '-'}</Text></Text>
+            {item.destination.address ? (
+              <Text style={styles.cardTextPlate}>Indirizzo: <Text style={styles.boldText}>{item.destination.address}</Text></Text>
+            ) : null}
+          </>
+        ) : null}
+
+        {item.wasteType ? (
+          <Text style={styles.cardTextPlate}>Codice CER: <Text style={styles.boldText}>{item.wasteType.cerCode}</Text> {item.wasteType.description ? `(${item.wasteType.description})` : ''}</Text>
+        ) : null}
+
         {item.notes ? (
           <Text style={styles.cardNote}>Note: {item.notes}</Text>
         ) : null}
@@ -355,6 +371,18 @@ export default function App() {
                 <View style={styles.modalDetails}>
                   <Text style={styles.modalDetailText}>Orario: <Text style={styles.boldText}>{formatTime(selectedSchedule.startDate)} - {formatTime(selectedSchedule.endDate)}</Text></Text>
                   <Text style={styles.modalDetailText}>Mezzo: <Text style={styles.boldText}>{selectedSchedule.vehicle?.plateNumber}</Text></Text>
+                  {selectedSchedule.destination ? (
+                    <>
+                      <Text style={styles.modalDetailText}>Cliente: <Text style={styles.boldText}>{selectedSchedule.destination.client?.name || '-'}</Text></Text>
+                      <Text style={styles.modalDetailText}>Cantiere: <Text style={styles.boldText}>{selectedSchedule.destination.name || '-'}</Text></Text>
+                      {selectedSchedule.destination.address ? (
+                        <Text style={styles.modalDetailText}>Indirizzo: <Text style={styles.boldText}>{selectedSchedule.destination.address}</Text></Text>
+                      ) : null}
+                    </>
+                  ) : null}
+                  {selectedSchedule.wasteType ? (
+                    <Text style={styles.modalDetailText}>CER: <Text style={styles.boldText}>{selectedSchedule.wasteType.cerCode}</Text> {selectedSchedule.wasteType.description ? `(${selectedSchedule.wasteType.description})` : ''}</Text>
+                  ) : null}
                   {selectedSchedule.notes ? (
                     <Text style={styles.modalDetailText}>Note: <Text style={{ fontStyle: 'italic' }}>{selectedSchedule.notes}</Text></Text>
                   ) : null}
