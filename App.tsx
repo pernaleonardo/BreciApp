@@ -118,9 +118,11 @@ export default function App() {
       const data = await res.json();
       if (data.success) {
         setSchedules(data.schedules);
+      } else {
+        Alert.alert('Errore', data.error || 'Impossibile recuperare i turni');
       }
-    } catch (e) {
-      Alert.alert('Errore', 'Impossibile recuperare i turni');
+    } catch (e: any) {
+      Alert.alert('Errore di connessione', e?.message || 'Impossibile recuperare i turni');
     } finally {
       setLoading(false);
     }
@@ -158,9 +160,11 @@ export default function App() {
         setSelectedSchedule(null);
         setLoadedQuantity('');
         fetchSchedules(driver.id);
+      } else {
+        Alert.alert('Errore aggiornamento', data.error || 'Impossibile aggiornare il turno.');
       }
-    } catch (e) {
-      Alert.alert('Errore', 'Impossibile aggiornare il turno');
+    } catch (e: any) {
+      Alert.alert('Errore di connessione', e?.message || 'Impossibile aggiornare il turno');
     } finally {
       setLoading(false);
     }
