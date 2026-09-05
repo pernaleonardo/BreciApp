@@ -2,7 +2,7 @@ import { StatusBar } from 'expo-status-bar';
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, FlatList, Alert, Modal, ActivityIndicator } from 'react-native';
 
-const API_URL = 'https://orange-space-zebra-5r6w7vvw5pr2ppgr-3000.app.github.dev/api/driver';
+const DEFAULT_API_URL = 'https://breci-gestionale.vercel.app/api/driver';
 
 // Helper functions for date/time calculations
 const getMonday = (d: Date): Date => {
@@ -68,6 +68,11 @@ export default function App() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // Server configuration state
+  const [apiUrl, setApiUrl] = useState(DEFAULT_API_URL);
+  const [showServerConfig, setShowServerConfig] = useState(false);
+  const [tempApiUrl, setTempApiUrl] = useState(DEFAULT_API_URL);
+
   const [schedules, setSchedules] = useState<any[]>([]);
   const [selectedSchedule, setSelectedSchedule] = useState<any>(null);
   const [loadedQuantity, setLoadedQuantity] = useState('');
@@ -84,10 +89,10 @@ export default function App() {
     if (!email) return;
     setLoading(true);
     try {
-      const res = await fetch(`${API_URL}/login`, {
+      const res = await fetch(`${apiUrl}/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email })
+        body: JSON.stringify({ email: email.trim() })
       });
       const data = await res.json();
       if (data.success) {
@@ -97,7 +102,10 @@ export default function App() {
         Alert.alert('Errore', data.error || 'Login fallito');
       }
     } catch (e) {
-      Alert.alert('Errore di connessione', 'Assicurati che il server Next.js sia avviato e accessibile.');
+      Alert.alert(
+        'Errore di connessione',
+        `Impossibile connettersi al server:\n${apiUrl}\n\nAssicurati che lo smartphone sia connesso a internet o controlla l'indirizzo nelle "Impostazioni Server".`
+      );
     } finally {
       setLoading(false);
     }
@@ -106,7 +114,7 @@ export default function App() {
   const fetchSchedules = async (driverId: number) => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_URL}/schedules?driverId=${driverId}`);
+      const res = await fetch(`${apiUrl}/schedules?driverId=${driverId}`);
       const data = await res.json();
       if (data.success) {
         setSchedules(data.schedules);
@@ -136,7 +144,7 @@ export default function App() {
 
     setLoading(true);
     try {
-      const res = await fetch(`${API_URL}/schedules/${selectedSchedule.id}`, {
+      const res = await fetch(`${apiUrl}/schedules/${selectedSchedule.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -252,6 +260,73 @@ export default function App() {
         <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={loading}>
           {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Accedi</Text>}
         </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={styles.serverSettingsBtn} 
+          onPress={() => { setTempApiUrl(apiUrl); setShowServerConfig(true); }}
+        >
+          <Text style={styles.serverSettingsText}>⚙ Configurazione Server</Text>
+        </TouchableOpacity>
+
+        {/* Server Config Modal */}
+        <Modal visible={showServerConfig} transparent animationType="slide">
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Configura Server</Text>
+              <Text style={styles.modalDetailText}>
+                Indirizzo API del gestionale:
+              </Text>
+              <TextInput
+                style={[styles.input, { fontSize: 13 }]}
+                value={tempApiUrl}
+                onChangeText={setTempApiUrl}
+                autoCapitalize="none"
+                autoCorrect={false}
+                placeholder="https://breci-gestionale.vercel.app/api/driver"
+              />
+              <View style={styles.modalButtons}>
+                <TouchableOpacity 
+                  style={[styles.actionBtn, { backgroundColor: '#3b82f6' }]} 
+                  onPress={() => {
+                    let clean = tempApiUrl.trim();
+                    if (clean) {
+                      if (!clean.endsWith('/api/driver')) {
+                        if (clean.endsWith('/')) clean = clean.slice(0, -1);
+                        if (!clean.includes('/api/driver')) clean = `${clean}/api/driver`;
+                      }
+                      setApiUrl(clean);
+                      setShowServerConfig(false);
+                      Alert.alert('Configurazione Salvata', `Server impostato su:\n${clean}`);
+                    }
+                  }}
+                >
+                  <Text style={styles.buttonText}>Salva</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                  style={[styles.actionBtn, { backgroundColor: '#6b7280' }]} 
+                  onPress={() => {
+                    setTempApiUrl(DEFAULT_API_URL);
+                    setApiUrl(DEFAULT_API_URL);
+                    setShowServerConfig(false);
+                    Alert.alert('Ripristinato', `Server predefinito Vercel ripristinato.`);
+                  }}
+                >
+                  <Text style={styles.buttonText}>Default</Text>
+                </TouchableOpacity>
+              </View>
+
+              <TouchableOpacity 
+                style={{ marginTop: 20, alignItems: 'center' }} 
+                onPress={() => setShowServerConfig(false)}
+              >
+                <Text style={{ color: '#6b7280', fontWeight: 'bold' }}>Chiudi</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+
+        <StatusBar style="dark" />
       </View>
     );
   }
@@ -483,5 +558,7 @@ const styles = StyleSheet.create({
   modalDetailText: { fontSize: 14, color: '#374151', marginBottom: 6 },
   label: { fontSize: 15, fontWeight: 'bold', marginBottom: 8, color: '#374151' },
   modalButtons: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 15 },
-  actionBtn: { flex: 1, padding: 15, borderRadius: 8, alignItems: 'center', marginHorizontal: 5 }
+  actionBtn: { flex: 1, padding: 15, borderRadius: 8, alignItems: 'center', marginHorizontal: 5 },
+  serverSettingsBtn: { marginTop: 25, padding: 10 },
+  serverSettingsText: { color: '#6b7280', fontSize: 13, textDecorationLine: 'underline' }
 });
