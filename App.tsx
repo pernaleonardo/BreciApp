@@ -1,6 +1,6 @@
 import { StatusBar } from 'expo-status-bar';
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, FlatList, Alert, Modal, ActivityIndicator } from 'react-native';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, FlatList, Alert, Modal, ActivityIndicator, Linking } from 'react-native';
 
 const DEFAULT_API_URL = 'https://breci-gestionale.vercel.app/api/driver';
 
@@ -465,6 +465,27 @@ export default function App() {
                   {selectedSchedule.notes ? (
                     <Text style={styles.modalDetailText}>Note: <Text style={{ fontStyle: 'italic' }}>{selectedSchedule.notes}</Text></Text>
                   ) : null}
+
+                  {selectedSchedule.vehicle?.documents?.length > 0 && (
+                    <View style={{ marginTop: 10, padding: 10, backgroundColor: '#f3f4f6', borderRadius: 8 }}>
+                      <Text style={[styles.boldText, { marginBottom: 5 }]}>Documenti Mezzo ({selectedSchedule.vehicle.documents.length})</Text>
+                      {selectedSchedule.vehicle.documents.map((doc: any) => (
+                        <TouchableOpacity
+                          key={doc.id}
+                          style={{ paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#e5e7eb' }}
+                          onPress={() => {
+                            const baseUrl = apiUrl.replace(/\/api\/driver\/?$/, '');
+                            Linking.openURL(`${baseUrl}${doc.fileUrl}`);
+                          }}
+                        >
+                          <Text style={{ color: '#2563eb', fontWeight: 'bold' }}>{doc.name}</Text>
+                          {doc.expirationDate && (
+                            <Text style={{ fontSize: 12, color: '#6b7280' }}>Scadenza: {doc.expirationDate}</Text>
+                          )}
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  )}
                 </View>
                 
                 <Text style={styles.label}>Tonnellate Caricate (t):</Text>
